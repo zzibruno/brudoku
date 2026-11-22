@@ -246,6 +246,11 @@
     animation:fall var(--t,2.6s) cubic-bezier(.25,.6,.4,1) forwards;animation-delay:var(--dl,0s)}
   @keyframes fall{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--sx,0px),105vh) rotate(var(--r,540deg));opacity:.9}}
 
+  /* fixed-size cells: content never resizes the grid */
+  .cell{min-width:0;min-height:0;overflow:hidden;contain:layout paint}
+  .cell .x,.cell .bw{position:absolute;left:50%;top:50%;translate:-50% -50%}
+  .cell .bw{width:88%;height:88%}
+  .ripple{width:90%}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -418,7 +423,7 @@
     clearInterval(timerId);timerId=setInterval(()=>{if(!over){seconds++;drawTimer()}},1000);
     $('hearts').innerHTML='<span>❤️</span><span>❤️</span><span>❤️</span>';
     build();draw(true)}
-  function build(){const n=P.n,pal=THEMES[theme].colors;boardEl.innerHTML='';boardEl.style.gridTemplateColumns=`repeat(${n},1fr)`;
+  function build(){const n=P.n,pal=THEMES[theme].colors;boardEl.innerHTML='';boardEl.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;boardEl.style.gridTemplateRows=`repeat(${n},minmax(0,1fr))`;
     for(let i=0;i<n*n;i++){const r=(i/n)|0,c=i%n,g=P.reg[i],d=document.createElement('div');
       d.className='cell enter';d.dataset.i=i;d.style.backgroundColor=pal[g%pal.length];d.style.setProperty('--in',((r+c)*32)+'ms');
       if(r>0&&P.reg[i-n]!==g)d.classList.add('bt');if(r<n-1&&P.reg[i+n]!==g)d.classList.add('bb');
