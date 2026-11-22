@@ -1,0 +1,17 @@
+{
+  "name": "Brudoku",
+  "short_name": "Brudoku",
+  "description": "Quebra-cabeça de cores — ache todos os Brunos.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fde3c8",
+  "theme_color": "#1f7f9e",
+  "lang": "pt-BR",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
