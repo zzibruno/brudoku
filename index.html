@@ -483,7 +483,7 @@ function generate(n,k,{seed=null,budgetMs=700,candidates=4}={}){
   const PHRASE="Quem nasceu pra ser sabaura, nunca será caterpillar.";
   const WIN_WORDS=["Incrível!","Sensacional!","Brilhante!","Mandou bem!","Que fase!"];
   // Voice clips (filled in later with Bruno's recordings: data URIs)
-  const VOICE={inicio:null,acerto:null,erro:null,dica:null,vitoria:null,derrota:null};
+  const VOICE={inicio:'voz-inicio.m4a',acerto:'voz-acerto.m4a',erro:'voz-erro.m4a',dica:null,vitoria:'voz-vitoria.m4a',derrota:'voz-derrota.m4a'};
 
   const MODES={
     normal:{k:1,label:n=>`Fase ${n}`,size:l=>l<=2?5:l<=5?6:l<=10?7:l<=18?8:l<=28?9:10,cands:l=>l<=5?2:l<=18?4:6},
@@ -514,8 +514,11 @@ function generate(n,k,{seed=null,budgetMs=700,candidates=4}={}){
     o.frequency.setValueAtTime(f,a.currentTime+t0);if(slide)o.frequency.exponentialRampToValueAtTime(f*slide,a.currentTime+t0+d);
     g.gain.setValueAtTime(0,a.currentTime+t0);g.gain.linearRampToValueAtTime(vol,a.currentTime+t0+.01);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+t0+d);
     o.connect(g);g.connect(a.destination);o.start(a.currentTime+t0);o.stop(a.currentTime+t0+d+.02)}
-  let voiceEl=null;
-  function voice(key){if(!settings.sound||!VOICE[key])return false;try{if(voiceEl)voiceEl.pause();voiceEl=new Audio(VOICE[key]);voiceEl.play().catch(()=>{})}catch(e){}return true}
+  const AUD={};for(const k in VOICE)if(VOICE[k]){try{const a=new Audio(VOICE[k]);a.preload='auto';AUD[k]=a}catch(e){}}
+  let curVoice=null,unlocked=false;
+  function unlockAudio(){if(unlocked)return;unlocked=true;ac();for(const k in AUD){const a=AUD[k];try{a.muted=true;const p=a.play();if(p)p.then(()=>{a.pause();a.currentTime=0;a.muted=false}).catch(()=>{a.muted=false})}catch(e){a.muted=false}}}
+  document.addEventListener('pointerdown',unlockAudio,{once:true,capture:true});
+  function voice(key){if(!settings.sound||!AUD[key])return false;try{if(curVoice&&curVoice!==AUD[key]){curVoice.pause()}const a=AUD[key];a.muted=false;a.currentTime=0;a.play().catch(()=>{});curVoice=a}catch(e){return false}return true}
   const SFX={
     tap:()=>tone(880,0,.05,'triangle',.06),
     mark:()=>tone(520,0,.06,'triangle',.07,.8),
@@ -683,7 +686,7 @@ function generate(n,k,{seed=null,budgetMs=700,candidates=4}={}){
       bw.querySelector('use').setAttribute('href','#b-cheer');bw.style.setProperty('--c',(idx++*80)+'ms');restart(bw,'cheer')})},450);
     const wait=450+G.solSet.size*80+600;
     setTimeout(()=>{
-      sfx('win','vitoria');confetti();
+      sfx('win');confetti();
       const stars=[0,1,2].map(k=>`<span style="animation-delay:${k*.14}s">${k<G.hearts?'⭐':'☆'}</span>`).join('');
       const sparks=[[-10,20],[220,30],[-20,180],[230,170],[100,-20],[110,235]].map((p,i)=>`<span class="spark" style="left:${p[0]}px;top:${p[1]}px;--sd:${i*.3}s">${i%2?'✨':'⭐'}</span>`).join('');
       fx.className='fx';fx.innerHTML=`<h1>${WIN_WORDS[Math.floor(Math.random()*WIN_WORDS.length)]}</h1>
@@ -692,8 +695,9 @@ function generate(n,k,{seed=null,budgetMs=700,candidates=4}={}){
         <div class="fxInfo" id="fxInfo"><div class="stars">${stars}</div>${settings.zen?'':`Tempo ${fmt(G.seconds)}`}${G.mode==='daily'?` · 🔥 ${stats.streak} dia${stats.streak>1?'s':''} seguidos`:''}</div>
         <div class="fxBtns" id="fxBtns"><button class="bigbtn" id="fxNext">${nextLabel}</button>${G.mode!=='daily'?'<button class="ghost" id="fxMenu">Menu</button>':''}</div>`;
       requestAnimationFrame(()=>requestAnimationFrame(()=>fx.classList.add('show')));
-      const words=fx.querySelectorAll('.phrase span');words.forEach((w,i)=>setTimeout(()=>w.classList.add('in'),1000+i*170));
-      const after=1000+words.length*170+250;
+      const words=fx.querySelectorAll('.phrase span');const step=AUD.vitoria&&settings.sound?Math.max(170,Math.round(((AUD.vitoria.duration||3.1)*1000-300)/words.length)):170;
+      setTimeout(()=>voice('vitoria'),950);words.forEach((w,i)=>setTimeout(()=>w.classList.add('in'),1000+i*step));
+      const after=1000+words.length*step+250;
       setTimeout(()=>$('fxInfo').classList.add('in'),after);setTimeout(()=>$('fxBtns').classList.add('in'),after+300);
       $('fxNext').onclick=()=>{fx.classList.remove('show');if(G.mode==='daily'){renderHome();show('home')}else setTimeout(()=>startMode(G.mode),250)};
       const m=$('fxMenu');if(m)m.onclick=()=>{fx.classList.remove('show');renderHome();show('home')};
