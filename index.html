@@ -226,6 +226,18 @@ svg.bru{display:block;width:100%;height:100%;overflow:visible}
 .fx.lose.show .face{animation:loseIn .6s var(--spring) .2s both,shiver 1.2s ease-in-out .9s infinite!important}
 @keyframes loseIn{from{transform:scale(0)}}
 
+
+/* ===== tile board (separate rounded squares) ===== */
+.boardwrap{padding:10px;background:var(--boardBg)}
+.board{border:0;border-radius:0;overflow:visible;gap:var(--gap,3px)}
+.cell{border:0!important;border-radius:22%;overflow:visible;box-shadow:inset 0 -2.5px 0 rgba(0,0,0,.13),inset 0 1.5px 0 rgba(255,255,255,.25)}
+.cell::after{border-radius:inherit}
+.cell.wrong{background-image:repeating-linear-gradient(45deg,rgba(229,72,77,.35) 0 4px,transparent 4px 8px)!important}
+.cell .bw{width:118%;height:118%;z-index:2}
+.cell .x{width:46%;height:46%}
+.cell.auto .x{opacity:.38}
+body[data-theme="claro"]{--boardBg:#f6efe5}
+body[data-theme="escuro"]{--boardBg:#1d1838}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -478,8 +490,8 @@ function generate(n,k,{seed=null,budgetMs=700,candidates=4}={}){
 
 (function(){
   // ================= config =================
-  const PALETTE={claro:["#ff9eb5","#ffd166","#8fd3ff","#c3b1ff","#a8e06c","#ffb072","#7fe0cf","#ff8a8a","#e3a6f0","#b9c6dd"],
-                 escuro:["#e98aa3","#e9bf5c","#6dbbe8","#a593ec","#8fc95a","#eb9a5c","#5cc7b4","#ea7c7c","#cb8ddb","#97a6c4"]};
+  const PALETTE={claro:["#9fc3e4","#d6a92a","#a8714e","#d27591","#3ea6ba","#f1d27c","#86d27d","#4d74a1","#8f7fd3","#f0a2dc"],
+                 escuro:["#86acd0","#c99d24","#9a6748","#c96b88","#3496aa","#e3c26a","#74c06c","#5a82b0","#8a7ad0","#df8fcb"]};
   const PHRASE="Quem nasceu pra ser sabaura, nunca será caterpillar.";
   const WIN_WORDS=["Incrível!","Sensacional!","Brilhante!","Mandou bem!","Que fase!"];
   // Voice clips (filled in later with Bruno's recordings: data URIs)
@@ -588,7 +600,7 @@ function generate(n,k,{seed=null,budgetMs=700,candidates=4}={}){
     setAvatar('neutral');drawTimer();
   }
   function build(animate){const n=G.n,pal=PALETTE[settings.theme];boardEl.innerHTML='';
-    boardEl.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;boardEl.style.gridTemplateRows=`repeat(${n},minmax(0,1fr))`;
+    boardEl.style.gridTemplateColumns=`repeat(${n},minmax(0,1fr))`;boardEl.style.gridTemplateRows=`repeat(${n},minmax(0,1fr))`;boardEl.style.setProperty('--gap',(n<=6?5:n<=8?4:3)+'px');
     for(let i=0;i<n*n;i++){const r=(i/n)|0,c=i%n,g=G.P.reg[i],d=document.createElement('div');
       d.className='cell'+(animate?' enter':'');d.dataset.i=i;d.style.backgroundColor=pal[g%pal.length];d.style.setProperty('--in',((r+c)*28)+'ms');
       if(r>0&&G.P.reg[i-n]!==g)d.classList.add('bt');if(r<n-1&&G.P.reg[i+n]!==g)d.classList.add('bb');
