@@ -355,7 +355,7 @@ body[data-theme="escuro"]{--boardBg:#1d1838}
     <button class="tool" id="bHint"><b>💡</b><span id="hintTxt">Dica (1)</span></button>
     <button class="tool" id="bClear"><b>🧹</b>Limpar ✕</button>
   </div>
-  <p class="help">Toque 1× marca ✕ · toque de novo coloca o Bruno · arraste para marcar vários ✕</p>
+  <p class="help">Toque 1× marca ✕ · toque no ✕ apaga · toque 2× rápido coloca o Bruno · arraste para marcar vários ✕</p>
 </div></section>
 
 <!-- SHEETS -->
@@ -653,16 +653,24 @@ function generate(n,k,{seed=null,budgetMs=700,candidates=4}={}){
   // ================= input =================
   let drag=null;
   const press=el=>{el.classList.add('press');setTimeout(()=>el.classList.remove('press'),60)};
+  // 1 toque: vazio→✕ | ✕→apaga · 2 toques rápidos na mesma casa: Bruno · arrastar: marca/apaga vários
+  let lastTap=null;const DOUBLE_MS=380;
   boardEl.addEventListener('pointerdown',e=>{if(!G||G.over||!G.P)return;const el=e.target.closest('.cell');if(!el)return;ac();
     const i=+el.dataset.i,s=G.state[i];if(s===2||s===3)return;press(el);
-    if(s===0){G.state[i]=1;drag={mode:'mark',start:i,moved:false};draw(false);sfx('mark')}else drag={mode:'place',start:i,moved:false};
+    if(s===0){G.state[i]=1;drag={mode:'mark',start:i,moved:false,wasEmpty:true};draw(false);sfx('mark')}
+    else drag={mode:'unmark',start:i,moved:false,wasEmpty:false};
     try{boardEl.setPointerCapture(e.pointerId)}catch(_){}});
   boardEl.addEventListener('pointermove',e=>{if(!drag)return;const el=document.elementFromPoint(e.clientX,e.clientY),cell=el&&el.closest&&el.closest('.cell');if(!cell)return;
-    const i=+cell.dataset.i;if(i===drag.start)return;drag.moved=true;
+    const i=+cell.dataset.i;if(i===drag.start)return;
+    if(!drag.moved){drag.moved=true;lastTap=null;if(drag.mode==='unmark'&&(G.state[drag.start]===1||G.state[drag.start]===4)){G.state[drag.start]=0;draw(false)}}
     if(drag.mode==='mark'&&G.state[i]===0){G.state[i]=1;press(cell);draw(false);sfx('tap')}
-    if(drag.mode==='place')drag.mode='unmark';
     if(drag.mode==='unmark'&&(G.state[i]===1||G.state[i]===4)){G.state[i]=0;draw(false)}});
-  boardEl.addEventListener('pointerup',()=>{if(!drag)return;if(drag.mode==='place'&&!drag.moved)place(drag.start);drag=null});
+  boardEl.addEventListener('pointerup',()=>{if(!drag)return;const d=drag;drag=null;if(d.moved||G.over)return;
+    const i=d.start,now=performance.now();
+    if(lastTap&&lastTap.i===i&&now-lastTap.t<DOUBLE_MS){lastTap=null;
+      if(G.state[i]===1||G.state[i]===4)G.state[i]=0;draw(true);place(i);return}
+    if(!d.wasEmpty&&(G.state[i]===1||G.state[i]===4)){G.state[i]=0;draw(false);sfx('tap')}
+    lastTap={i,t:now}});
   boardEl.addEventListener('pointercancel',()=>{drag=null});
 
   $('bHint').onclick=()=>{if(!G||G.over||G.hints<=0)return;const cand=[...G.solSet].filter(i=>G.state[i]!==2);if(!cand.length)return;
